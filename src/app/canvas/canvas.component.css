@@ -1,0 +1,487 @@
+.container {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 16px;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+.canvas-scroll-wrapper {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: auto;
+    /* Horizontal scroll enable karo */
+    overflow-y: hidden;
+    border-radius: 8px;
+}
+
+ .button-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 240px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding-right: 4px;
+    box-sizing: border-box;
+    transition: width 0.4s ease;
+}
+
+.button-panel.collapsed {
+    width: 0 !important;
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+.edit-circuit-wrapper {
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    opacity: 0;
+    transform: translateY(-30px);
+    pointer-events: none;
+}
+
+.edit-circuit-wrapper.show-edit {
+    opacity: 1;
+    transform: translateY(0);
+    position: fixed;
+    bottom: 20px;
+    /* position near bottom below canvas */
+    left: 50%;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+    z-index: 1000;
+    background-color: #007bff;
+    /* same button bg or customize */
+    border-radius: 6px;
+    padding: 8px 16px;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 0.2);
+}
+
+button,
+.button {
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: center;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    min-width: 100%;
+}
+
+button:disabled {
+    background-color: #a3c2f5;
+    cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+    background-color: #004494;
+    transform: translateY(1px);
+}
+
+canvas {
+    border: 1px solid #ccc;
+    flex-grow: 1;
+    min-width: 1200px;
+    height: 800px;
+    background: #fafafa;
+    box-sizing: border-box;
+    border-radius: 8px;
+}
+
+/* Popup Overlay Background */
+.text-input-popup {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -40%);
+    background: white;
+    border: 2px solid #333;
+    padding: 20px 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    width: 280px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+}
+
+/* Label styling */
+.text-input-popup label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* Input box styling */
+.text-input-popup input[type="text"],
+.text-input-popup input,
+.text-input-popup textarea {
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 15px;
+    border: 1.5px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+    outline-color: #007BFF;
+}
+
+/* Buttons container */
+.text-input-popup button {
+    min-width: 80px;
+    padding: 7px 12px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.text-input-popup button:hover {
+    opacity: 0.9;
+}
+
+/* Add Button Style */
+.text-input-popup button:first-of-type {
+    background-color: #007BFF;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+.text-input-popup button:first-of-type:hover {
+    background-color: #0056b3;
+}
+
+/* Cancel Button Style */
+.text-input-popup button:last-of-type {
+    background-color: #ccc;
+    color: #333;
+    transition: background-color 0.3s ease;
+}
+
+.text-input-popup button:last-of-type:hover {
+    background-color: #999;
+}
+
+/* Popup and form styles kept similar to your existing CSS, with box-sizing and spacing improvements */
+
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.18);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.popup-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px 32px 24px 32px;
+    box-shadow: 0 8px 48px rgba(56, 56, 56, 0.14);
+    min-width: 320px;
+    max-width: 92vw;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    animation: popup-in 0.18s;
+    box-sizing: border-box;
+}
+
+@keyframes popup-in {
+    0% {
+        transform: scale(0.94);
+        opacity: 0.1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 15px;
+    color: #555;
+    margin-bottom: 2px;
+}
+
+.popup-content input {
+    font-size: 16px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #b8b8b8;
+    margin-bottom: 6px;
+    outline: none;
+    transition: border 0.14s ease-in-out;
+    box-sizing: border-box;
+}
+
+.popup-content input:focus {
+    border: 1.7px solid #4885ed;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.popup-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 100%;
+    /* Or use width: 48%; if you want equal size */
+}
+
+.popup-btn.add {
+    background: #4276f0;
+    color: white;
+}
+
+.popup-btn.cancel {
+    background: #d9d9d9;
+    color: #454545;
+}
+
+/* Red Signal popup */
+.redsignal-popup {
+    position: fixed;
+    left: 40%;
+    top: 30%;
+    background: #fff;
+    border: 2px solid #333;
+    padding: 25px;
+    z-index: 9999;
+    border-radius: 8px;
+    box-sizing: border-box;
+    min-width: 280px;
+}
+
+select {
+    width: 180px;
+    padding: 6px 12px;
+    border: 1.8px solid #5ea2ea;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #007bff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+select:hover {
+    border-color: #0056b3;
+}
+
+select:focus {
+    border-color: #004494;
+    box-shadow: 0 0 6px #004494aa;
+}
+
+/* Dropdown arrow styling */
+select {
+    -webkit-appearance: none;
+    /* Remove default chrome arrow */
+    -moz-appearance: none;
+    /* Remove default firefox arrow */
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8L0 0h12L6 8z' fill='%23007bff'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px 6px;
+    padding-right: 36px;
+}
+
+/* ===== Smart Rename Manager ===== */
+.rename-manager-section {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: #fafafa;
+}
+
+.rename-manager-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.rename-manager-hint {
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.rename-manager-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rename-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.rename-input:focus {
+    border-color: #6a1b9a;
+}
+
+.rename-arrow {
+    font-size: 16px;
+    color: #555;
+    flex-shrink: 0;
+}
+
+.rename-apply-btn {
+    min-width: 0 !important;
+    width: auto !important;
+    flex-shrink: 0;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    color: white !important;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.rename-apply-btn:hover {
+    opacity: 0.85;
+    transform: none !important;
+}
+
+/* ===== Template Library ===== */
+.template-list {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.template-card-info {
+    background: #e8f4e8;
+    border-left: 3px solid #1a6b00;
+    padding: 5px 8px;
+    margin-bottom: 2px;
+    border-radius: 0 4px 0 0;
+    box-sizing: border-box;
+}
+
+.template-name {
+    display: block;
+    font-size: 11px;
+    font-weight: bold;
+    color: #1a3a6b;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.template-count {
+    display: block;
+    font-size: 10px;
+    color: #555;
+}
+
+.template-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.tpl-btn {
+    min-width: 0 !important;
+    width: 100% !important;
+    font-size: 11px !important;
+    padding: 4px 2px !important;
+    white-space: nowrap !important;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 0 0 4px 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.tpl-load {
+    background: #1565c0 !important;
+    color: white !important;
+}
+
+.tpl-load:disabled {
+    background: #90b8e8 !important;
+    cursor: not-allowed;
+}
+
+.tpl-delete {
+    background: #c62828 !important;
+    color: white !important;
+}
+
+.tpl-btn:hover:not(:disabled) {
+    opacity: 0.85;
+    transform: none !important;
+}
+
+/* ===== Responsive for smaller screens ===== */
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .button-panel {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        max-height: none;
+        overflow: visible;
+        gap: 8px;
+        padding-bottom: 12px;
+    }
+
+    button,
+    .button {
+        flex-grow: 1;
+        min-width: 90px;
+        font-size: 12px;
+    }
+
+    canvas {
+        min-width: 100%;
+        height: 400px;
+    }
+}

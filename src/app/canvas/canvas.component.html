@@ -1,0 +1,353 @@
+<div class="container">
+    <div class="button-panel" [class.collapsed]="isBuildCompleted">
+    <select [(ngModel)]="selectedCircuitId" (change)="onCircuitSelect()">
+        <option value="">-- Select Circuit ID --</option>
+        <option *ngFor="let c of circuits" [value]="c.id">{{ c.name || '[No name]' }}</option>
+    </select>
+
+        <button (click)="completeCircuitBuild()">Circuit Build Completed</button>
+        <div class="edit-circuit-wrapper" [class.show-edit]="isBuildCompleted">
+            <button (click)="editCircuit()">Edit Circuit</button>
+        </div>
+
+        <input class="button" type="file" (change)="importFileToSlot($event, 0)" />
+
+        <button (click)="exportSlotToFile(0)">📤 Export Circuit Slot 1</button>
+
+        <button (click)="zoomIn()">Zoom In</button>
+        <button (click)="zoomOut()">Zoom Out</button>
+        <button (click)="clearCanvas()">Clear Canvas</button>
+
+        <button (click)="saveToSlot(0)">💾 Save Circuit 1</button>
+        <button (click)="saveToSlot(1)">💾 Save Circuit 2</button>
+
+        <button (click)="saveToSlot(2)">💾 Save Circuit 3</button>
+
+        <button (click)="loadFromSlot(0)">📂 Load Circuit 1</button>
+        <button (click)="loadFromSlot(1)">📂 Load Circuit 2</button>
+        <button (click)="loadFromSlot(2)">📂 Load Circuit 3</button>
+
+        <button (click)="deleteSlot(0)">🗑️ Delete Circuit 1</button>
+        <button (click)="deleteSlot(1)">🗑️ Delete Circuit 2</button>
+        <button (click)="deleteSlot(2)">🗑️ Delete Circuit 3</button>
+
+        <button (click)="showAddTextDialog()">Add Text</button>
+        <div *ngIf="addTextPopupVisible" class="text-input-popup">
+            <label>Enter Text:</label>
+            <input [(ngModel)]="inputTextValue" />
+            <button (click)="confirmAddText()">Add</button>
+            <button (click)="addTextPopupVisible = false">Cancel</button>
+        </div>
+
+        <button (click)="showAddLineGDialog()" [disabled]="isBuildCompleted">Green Line</button>
+        <button (click)="showAddLineRDialog()" [disabled]="isBuildCompleted">Red Line</button>
+        <button (click)="showAddLineBDialog()" [disabled]="isBuildCompleted">Black Line</button>
+        <button (click)="showAddGroundIconDialog()" [disabled]="isBuildCompleted">Ground Signal</button>
+        <button (click)="showAddStarDialog()" [disabled]="isBuildCompleted">BM / CB not in op.</button>
+        <button (click)="showAddSwitchDialog()" [disabled]="isBuildCompleted">IOL</button>
+        <button (click)="showAddTrackJoinDialog()" [disabled]="isBuildCompleted">|--| PTFE</button>
+        <button (click)="showAddRedSignalDialog()" [disabled]="isBuildCompleted">Red Box V.</button>
+        <button (click)="showAddRedSignalHDialog()" [disabled]="isBuildCompleted">Red Box H.</button>
+        <button (click)="showAddDiagonalCautionDialog()" [disabled]="isBuildCompleted">Blue Box</button>
+        <button (click)="showAddCapacitorDialog()" [disabled]="isBuildCompleted">Capacitor</button>
+        <button (click)="showAddTwoCircleDialog()" [disabled]="isBuildCompleted">Double Circle</button>
+        <button (click)="showAddTriangleDialog()" [disabled]="isBuildCompleted">Diode</button>
+        <button (click)="showAddZeroShapeDialog()" [disabled]="isBuildCompleted">Zero Shape Icon</button>
+        <button (click)="showAddOpenSwitchDialog()" [disabled]="isBuildCompleted">Open Switch</button>
+
+        <!-- Add Icon Popup -->
+        <div *ngIf="showIconInputPopup" class="popup-overlay">
+            <div class="popup-content">
+                <h2>Add Icon Details</h2>
+                <div class="form-group">
+                    <label for="iconId">ID</label>
+                    <input id="iconId" [(ngModel)]="inputIconId" placeholder="Leave blank for auto ID" />
+                </div>
+                <div class="form-group">
+                    <label for="iconLabel">Label</label>
+                    <input id="iconLabel" [(ngModel)]="inputIconLabel" placeholder="Enter label (optional)" />
+                </div>
+                <div class="popup-actions">
+                    <button class="popup-btn add" (click)="confirmAddIcon()">Add Icon</button>
+                    <button class="popup-btn cancel" (click)="cancelAddIcon()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== RULE BUILDER POPUP (add / edit form) ===== -->
+        <div *ngIf="showRuleBuilder" class="popup-overlay">
+            <div class="popup-content">
+                <h3>{{ editingRuleIndex !== null ? 'Edit Rule' : 'New Rule' }}</h3>
+                <div class="form-group">
+                    <label>which line(s) to be red (comma seperated)</label>
+                    <input [(ngModel)]="ruleLines" placeholder="LG1, LG2" class="popup-input" />
+                </div>
+                <div class="form-group">
+                    <label>When? (condition)</label>
+                    <input [(ngModel)]="ruleWhen" placeholder="RS0 & RS1" class="popup-input" />
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <input type="number" [(ngModel)]="rulePriority" class="popup-input" />
+                </div>
+                <div class="popup-actions">
+                    <button class="popup-btn add" (click)="addRule()">Save rule</button>
+                    <button class="popup-btn cancel" (click)="showRuleBuilder = false">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <!-- ===== END RULE BUILDER POPUP ===== -->
+
+        <!-- ===== RULES MANAGER POPUP (list with edit / delete) ===== -->
+        <div *ngIf="showRulesManager" class="popup-overlay">
+            <div class="popup-content" style="min-width:480px; max-width:640px;">
+                <h3 style="margin:0 0 4px 0;">Circuit Rules ({{ boardRules.length }})</h3>
+                <p style="font-size:12px; color:#777; margin:0 0 12px 0;">
+                    Kaun se RS close hone par kaun si LG red hogi.
+                </p>
+
+                <div *ngIf="!boardRules.length" style="font-size:13px; color:#888; padding:14px 0;">
+                    No rule yet. Click "Add New Rule" to create one.
+                </div>
+
+                <div *ngIf="boardRules.length" style="max-height:340px; overflow:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="text-align:left; border-bottom:2px solid #ddd;">
+                                <th style="padding:6px 8px;">#</th>
+                                <th style="padding:6px 8px;">When (condition)</th>
+                                <th style="padding:6px 8px;">Lines &rarr; Red</th>
+                                <th style="padding:6px 8px;">Priority</th>
+                                <th style="padding:6px 8px; text-align:right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let r of boardRules; let i = index" style="border-bottom:1px solid #eee;">
+                                <td style="padding:6px 8px; color:#999;">{{ i + 1 }}</td>
+                                <td style="padding:6px 8px; font-family:monospace;">{{ r.when }}</td>
+                                <td style="padding:6px 8px;">{{ r.lines.join(', ') }}</td>
+                                <td style="padding:6px 8px;">{{ r.priority }}</td>
+                                <td style="padding:6px 8px; text-align:right; white-space:nowrap;">
+                                    <button (click)="editRule(i)"
+                                        style="background:#1565c0; color:#fff; border:none; padding:4px 12px; border-radius:4px; cursor:pointer; margin-right:6px;">
+                                        Edit
+                                    </button>
+                                    <button (click)="deleteRule(i)"
+                                        style="background:#c62828; color:#fff; border:none; padding:4px 12px; border-radius:4px; cursor:pointer;">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="popup-actions" style="margin-top:14px;">
+                    <button class="popup-btn add" (click)="openRuleBuilder()">➕ Add New Rule</button>
+                    <button class="popup-btn cancel" (click)="showRulesManager = false">Close</button>
+                </div>
+            </div>
+        </div>
+        <!-- ===== END RULES MANAGER POPUP ===== -->
+
+        <!-- RedSignal State Popup -->
+        <div *ngIf="popupVisible"
+            style="position:fixed; left:40%; top:30%; background:#fff; border:2px solid #333; padding:25px; z-index:9999">
+            <h3>{{ popupType }} [ID: {{popupId}}]</h3>
+            <div *ngIf="popupType === 'redSignal'">
+                <p>Choose state:</p>
+                <button *ngIf="onlyShowOpenOption" (click)="onRedSignalState('open')">Open</button>
+                <button *ngIf="!onlyShowOpenOption" (click)="onRedSignalState('close')">Close</button>
+                <button (click)="closePopup()" style="margin-top:10px">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Save Circuit Name Popup -->
+        <div *ngIf="circuitNamePopupVisible" class="popup-overlay">
+            <div class="popup-content">
+                <h3>Enter Circuit Name</h3>
+                <input type="text" [(ngModel)]="inputCircuitName" placeholder="Circuit name" />
+                <button (click)="confirmSaveCircuit()">OK</button>
+                <button (click)="circuitNamePopupVisible = false">Cancel</button>
+            </div>
+        </div>
+
+        <button (click)="detectFaultMode()">Find Fault</button>
+
+        <!-- ===== DB Rule Builder (sidebar buttons only) ===== -->
+        <hr style="margin: 8px 0; border-color: #aaa;">
+        <b style="font-size:12px; color:#333;">Circuit Logic (DB)</b>
+        <button (click)="openRuleBuilder()" style="background:#307bf4; color:white;">
+            ➕ Add Rule
+        </button>
+        <button (click)="openRulesManager()" style="background:#455a64; color:white;">
+            📋 Manage Rules ({{ boardRules.length }})
+        </button>
+        <!-- ===== END DB Rule Builder ===== -->
+
+        <!-- ===== COPY / PASTE SECTION ===== -->
+        <hr style="margin: 8px 0; border-color: #aaa;">
+        <b style="font-size:12px; color:#333;">Section Copy / Paste</b>
+
+        <button (click)="copySelectedSection()" [disabled]="isBuildCompleted"
+            title="First select objects on canvas (Shift+click or drag to multi-select), then click this button to copy.">
+            Copy Selected Section
+        </button>
+
+        <button (click)="openPasteDialog()" [disabled]="isBuildCompleted || copiedSection.length === 0"
+            title="Paste the copied section at a specified offset position.">
+            Paste Section
+        </button>
+
+        <!-- Paste Offset Dialog -->
+        <div *ngIf="showPasteOffsetDialog" class="popup-overlay">
+            <div class="popup-content">
+                <h3>Set Paste Offset</h3>
+                <div class="form-group">
+                    <label>Right shift (X pixels)</label>
+                    <input type="number" [(ngModel)]="pasteOffsetX" />
+                </div>
+                <div class="form-group">
+                    <label>Down shift (Y pixels)</label>
+                    <input type="number" [(ngModel)]="pasteOffsetY" />
+                </div>
+                <div class="popup-actions">
+                    <button class="popup-btn add" (click)="confirmPasteSection()">Paste</button>
+                    <button class="popup-btn cancel" (click)="showPasteOffsetDialog = false">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== RENAME TOOLS ===== -->
+        <hr style="margin: 8px 0; border-color: #aaa;">
+        <b style="font-size:12px; color:#333;">Rename Tools</b>
+
+        <button (click)="showRenameManager = true" style="background:#6a1b9a; color:white;">
+            Smart Rename Manager
+        </button>
+
+        <!-- Smart Rename Manager Popup -->
+        <div *ngIf="showRenameManager" class="popup-overlay">
+            <div class="popup-content" style="min-width:420px; max-width:500px;">
+                <h3 style="margin:0 0 8px 0; color:#333;">Smart Rename Manager</h3>
+                <p style="font-size:12px; color:#777; margin:0 0 16px 0;">
+                    Separate find &amp; replace for each type — only matching objects will be updated.
+                </p>
+
+                <!-- BM Name -->
+                <div class="rename-manager-section">
+                    <div class="rename-manager-label">BM Name (Canvas Text Labels)</div>
+                    <div class="rename-manager-hint">e.g. BM524 → BM660 &nbsp;|&nbsp; Only canvas text labels will be updated.</div>
+                    <div class="rename-manager-row">
+                        <input [(ngModel)]="bmFindText" placeholder="Find: BM524" class="rename-input" />
+                        <span class="rename-arrow">→</span>
+                        <input [(ngModel)]="bmReplaceText" placeholder="Replace: BM660" class="rename-input" />
+                        <button (click)="applyBMRename()" class="rename-apply-btn" style="background:#1565c0;">Apply</button>
+                    </div>
+                </div>
+
+                <!-- Line ID -->
+                <div class="rename-manager-section">
+                    <div class="rename-manager-label">Line ID (LG / LR / LB)</div>
+                    <div class="rename-manager-hint">e.g. LG1 → LG11 &nbsp;|&nbsp; Only line customId will be updated.</div>
+                    <div class="rename-manager-row">
+                        <input [(ngModel)]="lineFindText" placeholder="Find: LG1" class="rename-input" />
+                        <span class="rename-arrow">→</span>
+                        <input [(ngModel)]="lineReplaceText" placeholder="Replace: LG11" class="rename-input" />
+                        <button (click)="applyLineRename()" class="rename-apply-btn" style="background:#2e7d32;">Apply</button>
+                    </div>
+                </div>
+
+                <!-- RS Value -->
+                <div class="rename-manager-section">
+                    <div class="rename-manager-label">RS Value (RedSignal ID)</div>
+                    <div class="rename-manager-hint">e.g. RS8 → RS9 &nbsp;|&nbsp; Only redSignal customId will be updated.</div>
+                    <div class="rename-manager-row">
+                        <input [(ngModel)]="rsFindText" placeholder="Find: RS8" class="rename-input" />
+                        <span class="rename-arrow">→</span>
+                        <input [(ngModel)]="rsReplaceText" placeholder="Replace: RS9" class="rename-input" />
+                        <button (click)="applyRSRename()" class="rename-apply-btn" style="background:#c62828;">Apply</button>
+                    </div>
+                </div>
+
+                <div class="popup-actions" style="margin-top:8px;">
+                    <button class="popup-btn cancel" (click)="showRenameManager = false">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TEMPLATE LIBRARY ===== -->
+        <hr style="margin: 8px 0; border-color: #aaa;">
+        <b style="font-size:12px; color:#1a6b00;">Template Library</b>
+
+        <button (click)="openSaveTemplateDialog()" [disabled]="isBuildCompleted || copiedSection.length === 0"
+            style="background:#1a6b00; color:white;"
+            title="Give a name to the copied section and save it permanently as a reusable template.">
+            Save as Template
+        </button>
+
+        <!-- Save Template Dialog -->
+        <div *ngIf="showSaveTemplateDialog" class="popup-overlay">
+            <div class="popup-content">
+                <h3>Enter Template Name</h3>
+                <p style="font-size:12px; color:#555;">{{ copiedSection.length }} objects will be saved.</p>
+                <div class="form-group">
+                    <label>Template Name</label>
+                    <input [(ngModel)]="inputTemplateName" placeholder="e.g. Standard TSS, Simple SP, BSS Section" />
+                </div>
+                <div class="popup-actions">
+                    <button class="popup-btn add" (click)="confirmSaveTemplate()">Save Template</button>
+                    <button class="popup-btn cancel" (click)="showSaveTemplateDialog = false">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Show/Hide Library -->
+        <button (click)="showTemplateLibrary = !showTemplateLibrary; loadTemplateLibrary()">
+            {{ showTemplateLibrary ? 'Hide Library' : 'Show Templates (' + templateLibrary.length + ')' }}
+        </button>
+
+        <!-- Template List -->
+        <div *ngIf="showTemplateLibrary" class="template-list">
+            <p *ngIf="templateLibrary.length === 0" style="font-size:11px; color:#888; margin:4px 0;">
+                No templates saved yet.
+            </p>
+            <ng-container *ngFor="let t of templateLibrary; let i = index">
+                <div class="template-card-info">
+                    <span class="template-name">{{i + 1}}. {{ t.name }}</span>
+                    <span class="template-count">{{ t.objectCount }} objects</span>
+                </div>
+                <div class="template-card-actions">
+                    <button (click)="loadTemplate(i)" [disabled]="isBuildCompleted" class="tpl-btn tpl-load">
+                        Load
+                    </button>
+                    <button (click)="deleteTemplate(i)" class="tpl-btn tpl-delete">
+                        Delete
+                    </button>
+                </div>
+            </ng-container>
+        </div>
+
+        <!-- Export / Import Template File -->
+        <button (click)="exportTemplateLibrary()"
+            style="font-size:11px; background:#555; color:white;"
+            title="Export all templates to a JSON file for backup or sharing.">
+            Export Templates File
+        </button>
+        <label style="display:block; background:#555; color:white; text-align:center;
+                       padding:5px; border-radius:4px; cursor:pointer; font-size:11px; margin-top:2px;"
+            title="Import templates from a previously exported JSON file.">
+            Import Templates File
+            <input type="file" accept=".json" style="display:none" (change)="importTemplateLibrary($event)" />
+        </label>
+        <p style="font-size:10px; color:#666; margin:4px 0 0 0;">
+            Templates are stored in browser storage. Export regularly to keep a backup.
+        </p>
+
+    </div>
+
+    <div class="canvas-scroll-wrapper">
+        <canvas #canvas></canvas>
+    </div>
+
+</div>
